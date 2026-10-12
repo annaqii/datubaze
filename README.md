@@ -2,6 +2,6 @@
 Datubāzē tiek glabāta informācija par festivāliem, māksliniekiem, lokācijām, biļetēm, skatuvēm utml.
 
 # Mērķi
-## 1. ERD
-![Database ER diagram]
-(diagram/erd.png)
+## 1. ER diagram
+## 2. Izveidot 10 saistītas tabulas
+## 3. Izveidot datubāzes struktūru ar SQL
