@@ -1,149 +1,117 @@
 import sqlite3
 
+DB_NAME = "festivals.db"
 
-def connect():
-    database = sqlite3.connect("festival.db", timeout=10)
-    database.execute("PRAGMA foreign_keys = ON")
-    return database
+
+def get_connection():
+    conn = sqlite3.connect(DB_NAME)
+    conn.execute("PRAGMA foreign_keys = ON")
+    return conn
 
 
 def create_tables():
-    database = connect()
+    conn = get_connection()
+    cursor = conn.cursor()
 
-    try:
-        cursor = database.cursor()
+    cursor.executescript(
+        """
+        CREATE TABLE IF NOT EXISTS Locations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            address TEXT,
+            city TEXT,
+            country TEXT,
+            max_capacity INTEGER
+        );
 
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS Locations (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                address TEXT,
-                city TEXT,
-                country TEXT,
-                max_capacity INTEGER
-            )
-        """)
+        CREATE TABLE IF NOT EXISTS Festivals (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            description TEXT,
+            start_date TEXT,
+            end_date TEXT,
+            location_id INTEGER,
+            FOREIGN KEY (location_id) REFERENCES Locations(id)
+        );
 
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS Festivals (
-                festival_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                title TEXT NOT NULL,
-                description TEXT,
-                start_date DATE,
-                end_date DATE,
-                location_id INTEGER,
-                FOREIGN KEY (location_id) REFERENCES Locations(id)
-            )
-        """)
+        CREATE TABLE IF NOT EXISTS Stages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            festival_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            description TEXT,
+            capacity INTEGER,
+            FOREIGN KEY (festival_id) REFERENCES Festivals(id)
+        );
 
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS Stages (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                festival_id INTEGER NOT NULL,
-                name TEXT NOT NULL,
-                description TEXT,
-                capacity INTEGER,
-                FOREIGN KEY (festival_id)
-                    REFERENCES Festivals(festival_id)
-            )
-        """)
+        CREATE TABLE IF NOT EXISTS Artists (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            stage_name TEXT NOT NULL,
+            genre TEXT,
+            country TEXT,
+            bio TEXT
+        );
 
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS Artists (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                stage_name TEXT NOT NULL,
-                genre TEXT NOT NULL,
-                country TEXT,
-                bio TEXT
-            )
-        """)
+        CREATE TABLE IF NOT EXISTS Performances (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            festival_id INTEGER NOT NULL,
+            stage_id INTEGER NOT NULL,
+            artist_id INTEGER NOT NULL,
+            start_time TEXT,
+            end_time TEXT,
+            FOREIGN KEY (festival_id) REFERENCES Festivals(id),
+            FOREIGN KEY (stage_id) REFERENCES Stages(id),
+            FOREIGN KEY (artist_id) REFERENCES Artists(id)
+        );
 
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS Performances (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                festival_id INTEGER,
-                stage_id INTEGER,
-                artist_id INTEGER,
-                start_time TIMESTAMP,
-                end_time TIMESTAMP,
-                FOREIGN KEY (festival_id)
-                    REFERENCES Festivals(festival_id),
-                FOREIGN KEY (stage_id) REFERENCES Stages(id),
-                FOREIGN KEY (artist_id) REFERENCES Artists(id)
-            )
-        """)
+        CREATE TABLE IF NOT EXISTS Ticket_type (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            festival_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            price REAL,
+            available_quantity INTEGER,
+            FOREIGN KEY (festival_id) REFERENCES Festivals(id)
+        );
 
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS Users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                first_name TEXT NOT NULL,
-                last_name TEXT NOT NULL,
-                email TEXT UNIQUE NOT NULL,
-                phone TEXT,
-                registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
+        CREATE TABLE IF NOT EXISTS Users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            first_name TEXT,
+            last_name TEXT,
+            email TEXT,
+            phone TEXT,
+            registration_date TEXT
+        );
 
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS Ticket_type (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                festival_id INTEGER,
-                name TEXT NOT NULL,
-                price DECIMAL(10,2) NOT NULL,
-                available_quantity INTEGER,
-                FOREIGN KEY (festival_id)
-                    REFERENCES Festivals(festival_id)
-            )
-        """)
+        CREATE TABLE IF NOT EXISTS Tickets (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ticket_type_id INTEGER NOT NULL,
+            visitor_id INTEGER NOT NULL,
+            qr_code TEXT,
+            purchase_date TEXT,
+            status TEXT,
+            FOREIGN KEY (ticket_type_id) REFERENCES Ticket_type(id),
+            FOREIGN KEY (visitor_id) REFERENCES Users(id)
+        );
 
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS Tickets (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                ticket_type_id INTEGER,
-                visitor_id INTEGER,
-                qr_code TEXT,
-                purchase_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                status TEXT,
-                FOREIGN KEY (ticket_type_id)
-                    REFERENCES Ticket_type(id),
-                FOREIGN KEY (visitor_id) REFERENCES Users(id)
-            )
-        """)
+        CREATE TABLE IF NOT EXISTS Services (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            festival_id INTEGER NOT NULL,
+            name TEXT,
+            type TEXT,
+            location_description TEXT,
+            FOREIGN KEY (festival_id) REFERENCES Festivals(id)
+        );
 
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS Services (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                festival_id INTEGER,
-                name TEXT NOT NULL,
-                type TEXT,
-                location_description TEXT,
-                FOREIGN KEY (festival_id)
-                    REFERENCES Festivals(festival_id)
-            )
-        """)
+        CREATE TABLE IF NOT EXISTS Staff (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            festival_id INTEGER NOT NULL,
+            first_name TEXT,
+            last_name TEXT,
+            role TEXT,
+            phone TEXT,
+            FOREIGN KEY (festival_id) REFERENCES Festivals(id)
+        );
+        """
+    )
 
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS Staff (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                festival_id INTEGER,
-                first_name TEXT NOT NULL,
-                last_name TEXT NOT NULL,
-                role TEXT,
-                phone TEXT,
-                FOREIGN KEY (festival_id)
-                    REFERENCES Festivals(festival_id)
-            )
-        """)
-
-        database.commit()
-
-    except sqlite3.Error:
-        database.rollback()
-        raise
-
-    finally:
-        database.close()
-
-
-if __name__ == "__main__":
-    create_tables()
+    conn.commit()
+    conn.close()
