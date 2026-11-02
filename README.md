@@ -34,9 +34,7 @@ Programmā iespējams:
 
 - apskatīt tabulu datus;
 - pievienot jaunus ierakstus;
-- labot ierakstus;
 - dzēst ierakstus;
-- meklēt ierakstus;
 - pārslēgties starp datubāzes tabulām.
 
 ## Datubāzes tabulas
