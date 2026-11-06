@@ -1,3 +1,5 @@
+-- nomainit _id uz name/type
+
 # Festivālu datubāze
 
 ## Projekta mērķis
