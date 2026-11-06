@@ -1,4 +1,4 @@
--- nomainit _id uz name/type
+// nomainit _id uz name/type
 
 # Festivālu datubāze
 
